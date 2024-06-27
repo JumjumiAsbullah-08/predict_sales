@@ -1,4 +1,12 @@
 # Predict Sales Project
+![Streamlit](https://img.shields.io/badge/-Streamlit-FF4B4B?style=flat-square&logo=Streamlit&logoColor=white)
+![Pandas](https://img.shields.io/badge/-Pandas-150458?style=flat-square&logo=Pandas&logoColor=white)
+![NumPy](https://img.shields.io/badge/-NumPy-013243?style=flat-square&logo=NumPy&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/-scikit--learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)
+![Altair](https://img.shields.io/badge/-Altair-7FB3D5?style=flat-square&logo=Altair&logoColor=white)
+![Matplotlib](https://img.shields.io/badge/-Matplotlib-377EB8?style=flat-square&logo=Matplotlib&logoColor=white)
+![Plotly](https://img.shields.io/badge/-Plotly-3F4F75?style=flat-square&logo=Plotly&logoColor=white)
+![openpyxl](https://img.shields.io/badge/-openpyxl-00ADEF?style=flat-square&logo=openpyxl&logoColor=white)
 
 This repository contains a Streamlit web application for predicting sales based on various features. The prediction model is built using scikit-learn and data manipulation is done using pandas and numpy. Visualization is handled with Altair, Matplotlib, and Plotly. The project also involves reading and writing Excel files using openpyxl.
 
