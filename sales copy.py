@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import altair as alt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
+import plotly.express as px
+import matplotlib.pyplot as plt
 
 # Function to preprocess data and train model
 def preprocess_data_and_train_model(df):
@@ -58,7 +59,7 @@ def preprocess_data_and_train_model(df):
         'Metrics': ['Akurasi', 'Recall', 'Presisi', 'F1 Score'],
         'Value': [accuracy * 100, recall * 100, precision * 100, f1 * 100]
     })
-    return model, X_train.columns, metrics_df  # Return model, columns used for training, and metrics_df
+    return model, X_train.columns, metrics  # Return model, columns used for training, and metrics
 
 # Function to predict sales and returns
 def predict_sales_and_returns(model, input_data, columns_fit):
@@ -119,7 +120,7 @@ if file_path is not None:
     st.write(df)
 
     # Preprocess and train model using loaded data
-    model, columns_fit, metrics_df = preprocess_data_and_train_model(df)
+    model, columns_fit, metrics = preprocess_data_and_train_model(df)
     
     # Define bulan_tahun_prediksi here
     bulan_tahun_options = ['Semua Bulan dan Tahun'] + pd.to_datetime(df['TGL_INVC']).dt.to_period('M').astype(str).unique().tolist()
@@ -162,7 +163,7 @@ if file_path is not None:
             else:
                 retur_percentage = 0
 
-            # Determine outlet health status
+                        # Determine outlet health status
             if retur_percentage > 5:
                 outlet_status = "Tidak Sehat"
             else:
@@ -172,6 +173,7 @@ if file_path is not None:
             if outlet_status == "Sehat":
                 result_data.append({
                     'Nama Outlet': outlet,
+                    # 'Persentase Retur (%)': retur_percentage,
                     'Status Outlet': outlet_status
                 })
 
@@ -249,24 +251,28 @@ if file_path is not None:
         st.altair_chart(retur_chart, use_container_width=True)
 
         # Display metrics as line chart with markers
+        # Display metrics as line chart with markers
         st.subheader('Metrik Model')
-        st.write(metrics_df)
+        metrics_df = pd.DataFrame.from_dict(metrics, orient='index', columns=['Score'])
+        metrics_df.reset_index(inplace=True)
+        metrics_df = metrics_df.rename(columns={'index': 'Metric'})
 
         # Plotly Line Chart with Markers
-        fig = px.line(metrics_df, x='Metrics', y='Value', title='Metrik Model: Akurasi, Recall, Presisi, F1 Score',
-                      labels={'Metrics': 'Metric', 'Value': 'Score (%)'}, markers=True)
+        fig = px.line(metrics_df, x='Metric', y='Score', title='Metrik Model: Akurasi, Recall, Presisi, F1 Score',
+                    labels={'Metric': 'Metric', 'Score': 'Score (%)'}, markers=True)
 
         # Add annotations to the chart
         for i, row in metrics_df.iterrows():
             fig.add_annotation(
-                x=row['Metrics'],      # X coordinate based on metric
-                y=row['Value'],       # Y coordinate based on value
-                text=f'{row["Value"]:.1f}%',  # Text to display (format the text correctly)
+                x=row['Metric'],      # X coordinate based on metric
+                y=row['Score'],       # Y coordinate based on value
+                text=f'{row["Score"]:0f}%',  # Text to display (format the text correctly)
                 font=dict(size=10),   # Font size
                 yshift=10             # Vertical text position shift
             )
 
         st.plotly_chart(fig, use_container_width=True)  # Display the chart
+
 
     else:
         st.error('Tidak ada data yang cocok dengan kriteria yang dimasukkan.')
