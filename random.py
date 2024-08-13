@@ -214,5 +214,5 @@ if uploaded_file is not None:
             except Exception as e:
                 st.error(f"Error occurred: {e}")
 
-        if st.button("Download Decision Tree as PNG"):
-            download_decision_tree_as_png(model, X)
+    if st.button("Download Decision Tree as PNG"):
+        download_decision_tree_as_png(model, X)
