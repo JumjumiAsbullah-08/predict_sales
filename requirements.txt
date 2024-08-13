@@ -6,3 +6,4 @@ altair
 matplotlib
 openpyxl
 plotly
+graphviz
