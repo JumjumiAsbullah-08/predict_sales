@@ -186,33 +186,31 @@ if uploaded_file is not None:
         st.header("Grafik Metrik Evaluasi")
         st.plotly_chart(fig, use_container_width=True)  # Display the chart
 
-        def download_decision_tree_as_png(model, X):
-            try:
-                # Menampilkan pohon keputusan untuk Random Forest
-                estimator = model.estimators_[0]  # Contoh: pilih estimator pertama
-                dot_data = export_graphviz(estimator, out_file=None, 
-                                        feature_names=X.columns,  
-                                        filled=True, rounded=True,  
-                                        special_characters=True)  
-                graph = graphviz.Source(dot_data)  
-
-                # Simpan Graphviz source sebagai PNG di objek BytesIO
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
-                    temp_filename = temp_file.name
-                    graph.format = 'png'
-                    graph.render(filename=temp_filename, format='png', cleanup=False)
-                    
-                    # Membaca file PNG dari direktori sementara
-                    with open(temp_filename, 'rb') as f:
-                        png_data = f.read()
-
-                # Buat tautan untuk mengunduh PNG
-                b64 = base64.b64encode(png_data).decode()
-                href = f'<a href="data:image/png;base64,{b64}" download="decision_tree.png">Klik di sini untuk mengunduh Decision Tree sebagai PNG</a>'
-                st.markdown(href, unsafe_allow_html=True)
-
-            except Exception as e:
-                st.error(f"Error occurred: {e}")
-
+        # Button untuk mengunduh Decision Tree sebagai PNG
     if st.button("Download Decision Tree as PNG"):
-        download_decision_tree_as_png(model, X)
+        try:
+            # Menampilkan pohon keputusan untuk Random Forest
+            estimator = model.estimators_[0]  # Contoh: pilih estimator pertama
+            dot_data = export_graphviz(estimator, out_file=None, 
+                                       feature_names=X.columns,  
+                                       filled=True, rounded=True,  
+                                       special_characters=True)  
+            graph = graphviz.Source(dot_data)  
+
+            # Simpan Graphviz source sebagai PNG di objek BytesIO
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
+                temp_filename = temp_file.name
+                graph.format = 'png'
+                graph.render(filename=temp_filename, format='png', cleanup=False)
+                
+                # Membaca file PNG dari direktori sementara
+                with open(temp_filename, 'rb') as f:
+                    png_data = f.read()
+
+            # Buat tautan untuk mengunduh PNG
+            b64 = base64.b64encode(png_data).decode()
+            href = f'<a href="data:image/png;base64,{b64}" download="decision_tree.png">Klik di sini untuk mengunduh Decision Tree sebagai PNG</a>'
+            st.markdown(href, unsafe_allow_html=True)
+
+        except Exception as e:
+            st.error(f"Error occurred: {e}")
