@@ -200,10 +200,10 @@ if uploaded_file is not None:
             # Simpan Graphviz source sebagai PNG di objek BytesIO
             with io.BytesIO() as buffer:
                 graph.format = 'png'
-                graph.render(filename='/decision_tree', format='png', cleanup=True)
+                graph.render(filename='decision_tree', format='png', cleanup=True)
                     
                     # Membaca file PNG dari direktori sementara
-                with open('/decision_tree.png', 'rb') as f:
+                with open('decision_tree.png', 'rb') as f:
                     png_data = f.read()
 
                 # Buat tautan untuk mengunduh PNG
