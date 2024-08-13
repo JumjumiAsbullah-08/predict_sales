@@ -9,6 +9,8 @@ from sklearn.tree import export_graphviz
 import graphviz
 import io
 import base64
+import tempfile
+import os
 
 # Judul aplikasi
 st.title("Aplikasi Prediksi Penjualan dengan Random Forest")
@@ -188,25 +190,28 @@ if uploaded_file is not None:
         # Button untuk mengunduh Decision Tree sebagai PNG
     if st.button("Download Decision Tree as PNG"):
         try:
-        # Menampilkan pohon keputusan untuk Random Forest
-            # Pilih salah satu pohon dari RandomForest
+            # Menampilkan pohon keputusan untuk Random Forest
             estimator = model.estimators_[0]  # Contoh: pilih estimator pertama
             dot_data = export_graphviz(estimator, out_file=None, 
-                                           feature_names=X.columns,  
-                                           filled=True, rounded=True,  
-                                           special_characters=True)  
+                                       feature_names=X.columns,  
+                                       filled=True, rounded=True,  
+                                       special_characters=True)  
             graph = graphviz.Source(dot_data)  
 
             # Simpan Graphviz source sebagai PNG di objek BytesIO
-            with io.BytesIO() as buffer:
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
+                temp_filename = temp_file.name
                 graph.format = 'png'
-                graph.render(filename='/tmp/decision_tree', format='png', cleanup=True)
-                    
-                    # Membaca file PNG dari direktori sementara
-                with open('/tmp/decision_tree.png', 'rb') as f:
+                graph.render(filename=temp_filename, format='png', cleanup=False)
+                
+                # Membaca file PNG dari direktori sementara
+                with open(temp_filename, 'rb') as f:
                     png_data = f.read()
 
-                # Buat tautan untuk mengunduh PNG
+            # Membersihkan file sementara jika diperlukan
+            os.remove(temp_filename)
+
+            # Buat tautan untuk mengunduh PNG
             b64 = base64.b64encode(png_data).decode()
             href = f'<a href="data:image/png;base64,{b64}" download="decision_tree.png">Klik di sini untuk mengunduh Decision Tree sebagai PNG</a>'
             st.markdown(href, unsafe_allow_html=True)
