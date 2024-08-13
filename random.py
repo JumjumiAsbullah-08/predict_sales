@@ -10,7 +10,6 @@ import graphviz
 import io
 import base64
 import tempfile
-import os
 
 # Judul aplikasi
 st.title("Aplikasi Prediksi Penjualan dengan Random Forest")
@@ -207,9 +206,6 @@ if uploaded_file is not None:
                 # Membaca file PNG dari direktori sementara
                 with open(temp_filename, 'rb') as f:
                     png_data = f.read()
-
-            # Membersihkan file sementara jika diperlukan
-            os.remove(temp_filename)
 
             # Buat tautan untuk mengunduh PNG
             b64 = base64.b64encode(png_data).decode()
