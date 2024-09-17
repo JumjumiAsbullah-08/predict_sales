@@ -7,6 +7,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import plotly.express as px
 from sklearn.tree import export_graphviz
 import graphviz
+import altair as alt
 import io
 import base64
 
@@ -147,6 +148,57 @@ if uploaded_file is not None:
 
         st.header("Tabel Total dan Rata-rata Penjualan per Salesman")
         st.write(salesman_data)
+
+        # Grafik Tren berdasarkan Tipe Transaksi
+        if trs_type in ['SALES', 'RETUR']:
+            st.subheader(f'Hasil Penjumlahan dan Rata-rata QTYSALES berdasarkan Nama Outlet dan Tipe Transaksi {trs_type}')
+            
+            # Pastikan filtering TRS_TYPE menggunakan string asli sebelum encoding
+            trs_type_encoded = le_trs_type.transform([trs_type])[0]
+            
+            # Kelompokkan data berdasarkan NAMAOUTLET dan hitung sum dan mean QTYSALES
+            grouped_data = df[df['TRS_TYPE'] == trs_type_encoded].groupby('NAMAOUTLET')['QTYSALES'].agg(['sum', 'mean']).reset_index()
+
+            # Ubah kode NAMAOUTLET kembali menjadi nama asli menggunakan LabelEncoder
+            grouped_data['Nama Outlet'] = le_namaoutlet.inverse_transform(grouped_data['NAMAOUTLET'])
+
+            # Hapus kolom NAMAOUTLET numerik setelah transformasi
+            grouped_data = grouped_data[['Nama Outlet', 'sum', 'mean']]
+
+            # Ganti nama kolom untuk kejelasan
+            grouped_data = grouped_data.rename(columns={'sum': 'Jumlah Produk', 'mean': 'Rata-rata Produk'})
+
+            # Urutkan data berdasarkan Jumlah Produk dari yang terbesar
+            grouped_data = grouped_data.sort_values(by='Jumlah Produk', ascending=False)
+
+            # Tampilkan hasil dengan pembulatan pada kolom Rata-rata Produk
+            grouped_data['Rata-rata Produk'] = grouped_data['Rata-rata Produk'].round(0).astype(int)
+
+            # Tampilkan hasilnya dalam bentuk tabel
+            st.write(grouped_data)
+
+            # --- Grafik Tren berdasarkan tipe transaksi ---
+            st.subheader(f'Tren {trs_type} untuk Semua Outlet yang Terdaftar')
+
+            # Filter trend_data untuk semua outlet yang ada di grouped_data
+            trend_data = df[df['TRS_TYPE'] == trs_type_encoded]
+            trend_data['NAMAOUTLET'] = le_namaoutlet.inverse_transform(trend_data['NAMAOUTLET'])
+
+            # Filter trend_data hanya untuk outlet yang ada di tabel hasil (grouped_data)
+            filtered_trend_data = trend_data[trend_data['NAMAOUTLET'].isin(grouped_data['Nama Outlet'])]
+
+            # Buat grafik tren
+            trend_chart = alt.Chart(filtered_trend_data).mark_line().encode(
+                x='TGL_INVC:T',
+                y='QTYSALES:Q',
+                color='NAMAOUTLET:N'  # Warna berbeda untuk tiap outlet
+            ).properties(
+                title=f'Tren {trs_type} per Outlet (Seluruh Outlet Terdaftar)'
+            )
+
+            # Tampilkan grafik
+            st.altair_chart(trend_chart, use_container_width=True)
+
 
         # Grafik Metrik Evaluasi
         # Membuat dummy data untuk metrik evaluasi, karena RandomForestRegressor tidak menghasilkan metrik ini
