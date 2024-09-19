@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
@@ -45,23 +46,33 @@ if uploaded_file is not None:
     le_namasalesman = LabelEncoder()
     df['NAMASALESMAN'] = le_namasalesman.fit_transform(df['NAMASALESMAN'])
 
-    # Menambah fitur interaksi
+    # Menambah fitur interaksi dan fitur temporal baru
     df['Outlet_Barang'] = df['NAMAOUTLET'] * df['NAMABARANG']
     df['Tahun_Bulan'] = df['Tahun'] * df['Bulan']
+    df['Relative_Year'] = df['Tahun'] - df['Tahun'].min()  # Fitur tambahan untuk tahun relatif
+    
+    # Tambahkan fitur perubahan YoY, atasi NaN dan infinity
+    df['Perubahan_YoY'] = df.groupby('NAMAOUTLET')['QTYSALES'].pct_change().replace([np.inf, -np.inf], 0).fillna(0)
 
-    # Fitur dan label
-    X = df[['TRS_TYPE', 'NAMAOUTLET', 'NAMABARANG', 'Bulan', 'Tahun', 'Outlet_Barang', 'Tahun_Bulan', 'NAMASALESMAN']]
+    # Tambahkan fitur moving average
+    df['Moving_Avg'] = df.groupby('NAMAOUTLET')['QTYSALES'].rolling(window=3).mean().reset_index(0, drop=True).fillna(0)
+
+    # Fitur dan label (QTYSALES sebagai target)
+    X = df[['TRS_TYPE', 'NAMAOUTLET', 'NAMABARANG', 'Bulan', 'Tahun', 'Outlet_Barang', 'Tahun_Bulan', 'Relative_Year', 'Perubahan_YoY', 'Moving_Avg', 'NAMASALESMAN']]
     y = df['QTYSALES']
 
     # Normalisasi fitur
-    scaler = StandardScaler()
-    X[['Tahun', 'Bulan']] = scaler.fit_transform(X[['Tahun', 'Bulan']])
+    # scaler = StandardScaler()
+    # X[['Tahun', 'Bulan']] = scaler.fit_transform(X[['Tahun', 'Bulan']])
 
+    # Cek apakah ada nilai NaN atau infinity dalam dataset
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)  # Ganti infinity dengan NaN
+    df.fillna(0, inplace=True)  # Isi NaN dengan 0
     # Split data menjadi training dan testing
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Membuat model Random Forest
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    # Membuat model Random Forest dengan hyperparameter tuning
+    model = RandomForestRegressor(n_estimators=200, max_depth=20, min_samples_split=10, random_state=42)
     model.fit(X_train, y_train)
 
     # Form untuk prediksi di sidebar
@@ -82,17 +93,21 @@ if uploaded_file is not None:
 
     outlet_barang = namaoutlet_encoded * namabarang_encoded
     tahun_bulan = tahun * bulan
+    relative_year = tahun - df['Tahun'].min()  # Tahun relatif
 
     # Normalisasi fitur input
-    input_features = pd.DataFrame([[tahun, bulan]], columns=['Tahun', 'Bulan'])
-    input_features[['Tahun', 'Bulan']] = scaler.transform(input_features[['Tahun', 'Bulan']])
+    # input_features = pd.DataFrame([[tahun, bulan]], columns=['Tahun', 'Bulan'])
+    # input_features[['Tahun', 'Bulan']] = scaler.transform(input_features[['Tahun', 'Bulan']])
 
-    tahun_norm = input_features['Tahun'].values[0]
-    bulan_norm = input_features['Bulan'].values[0]
+    # tahun_norm = input_features['Tahun'].values[0]
+    # bulan_norm = input_features['Bulan'].values[0]
 
     # Prediksi
     if st.sidebar.button("Prediksi"):
-        input_data = [[trs_type_encoded, namaoutlet_encoded, namabarang_encoded, bulan_norm, tahun_norm, outlet_barang, tahun_bulan, namasalesman_encoded]]
+        input_data = [[trs_type_encoded, namaoutlet_encoded, namabarang_encoded, bulan, tahun, outlet_barang, tahun_bulan, relative_year, 0, 0, namasalesman_encoded]]
+        input_data = pd.DataFrame(input_data, columns=X.columns)  # Pastikan input data memiliki kolom yang sama
+
+        # input_data = [[trs_type_encoded, namaoutlet_encoded, namabarang_encoded, bulan_norm, tahun_norm, outlet_barang, tahun_bulan, namasalesman_encoded]]
         prediksi_total = model.predict(input_data)[0]
 
         # Menghitung persentase retur dan menentukan status outlet
@@ -101,6 +116,7 @@ if uploaded_file is not None:
         persentase_retur = (total_retur / total_sales) * 100 if total_sales > 0 else 0
         status_outlet = "Sehat" if persentase_retur < 5 else "Tidak Sehat"
 
+        # Menampilkan hasil prediksi
         st.header("Hasil Prediksi")
         st.success(f"**Prediksi total {le_trs_type.inverse_transform([trs_type_encoded])[0]} {le_namabarang.inverse_transform([namabarang_encoded])[0]} di Outlet {le_namaoutlet.inverse_transform([namaoutlet_encoded])[0]} pada bulan {bulan} dan tahun {tahun} untuk tipe transaksi {le_trs_type.inverse_transform([trs_type_encoded])[0]} oleh Salesman {le_namasalesman.inverse_transform([namasalesman_encoded])[0]} adalah: {int(prediksi_total)} Btl**")
 
