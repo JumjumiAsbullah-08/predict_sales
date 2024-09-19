@@ -54,6 +54,14 @@ model.fit(X, y)
 # Streamlit app
 st.title('Prediksi Penjualan Barang')
 
+st.sidebar.markdown(
+    """
+    <div style="text-align: center;">
+        <img src="https://cdn.pixabay.com/photo/2013/07/13/11/57/apothecary-159037_1280.png" style="width: 100px; height: auto;">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 st.sidebar.header("Form Prediksi")
 trs_type = st.sidebar.selectbox("Tipe Transaksi", le_trs_type.classes_)
 namaoutlet = st.sidebar.selectbox("Nama Outlet", le_namaoutlet.classes_)
