@@ -18,7 +18,7 @@ import base64
 # Judul aplikasi
 st.title("Aplikasi Prediksi Penjualan dengan Random Forest")
 # Path ke file Excel
-file_path = r'C:\PREDICT_SALES\data.xlsx'
+file_path = r'data.xlsx'
 
 # Membaca data dari file Excel
 data = pd.read_excel(file_path)
